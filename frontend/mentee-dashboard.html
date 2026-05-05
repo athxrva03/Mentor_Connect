@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentee Dashboard | MentorBridge</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        /* Use global variables from styles.css */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 1.25rem;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-dark); transform: translateY(-2px); }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            text-align: left;
+            padding: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-pending { background-color: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .badge-approved { background-color: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .badge-rejected { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .badge-submitted { background-color: rgba(99, 102, 241, 0.1); color: var(--primary); }
+        .badge-verified { background-color: rgba(16, 185, 129, 0.1); color: var(--success); }
+
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-muted); }
+        .form-control {
+            width: 100%;
+            padding: 0.875rem;
+            border-radius: 0.75rem;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            outline: none;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo-container">
+                <i class="fas fa-bolt"></i> <span>MentorBridge</span>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item active" onclick="showTab('overview')"><i class="fas fa-home"></i> <span>Dashboard</span></div>
+                <div class="nav-item" onclick="showTab('meetings')"><i class="fas fa-video"></i> <span>Meetings</span></div>
+                <div class="nav-item" onclick="showTab('assignments')"><i class="fas fa-file-alt"></i> <span>Assignments</span></div>
+                <div class="nav-item" onclick="showTab('mentors')"><i class="fas fa-user-friends"></i> <span>Find Mentors</span></div>
+            </nav>
+            <div style="margin-top: auto;">
+                <button onclick="logout()" class="nav-item" style="width: 100%; border: none; background: transparent; cursor: pointer;">
+                    <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="content">
+            <header class="header">
+                <div>
+                    <h1 style="font-size: 1.875rem; font-weight: 700;">Welcome back, <span id="user-name">Student</span>!</h1>
+                    <p style="color: var(--text-muted);">Track your mentorship progress and meetings.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></button>
+                    <div class="user-profile">
+                        <div class="avatar" id="user-avatar">?</div>
+                        <div>
+                            <p style="font-weight: 600;" id="user-full-name">Student Name</p>
+                            <p style="font-size: 0.8125rem; color: var(--text-muted);" id="user-role">Mentee</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-pane active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.875rem;">Total Meetings</p>
+                            <h3 style="font-size: 1.5rem; font-weight: 700;" id="stat-meetings">0</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(236, 72, 153, 0.1); color: var(--secondary);">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.875rem;">Assignments</p>
+                            <h3 style="font-size: 1.5rem; font-weight: 700;" id="stat-assignments">0</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.875rem;">Verified</p>
+                            <h3 style="font-size: 1.5rem; font-weight: 700;" id="stat-verified">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 style="font-size: 1.25rem;">Upcoming Meetings</h2>
+                            <button class="btn btn-primary" onclick="openModal('request-modal')"><i class="fas fa-plus"></i> Request</button>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Mentor</th>
+                                    <th>Topic</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="meetings-table-body-overview"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 style="font-size: 1.25rem;">Quick Upload</h2>
+                        </div>
+                        <form id="quick-upload-form">
+                            <div class="form-group">
+                                <label>Assignment Title</label>
+                                <input type="text" id="upload-title" class="form-control" placeholder="e.g. Weekly Report" required>
+                            </div>
+                            <div class="form-group">
+                                <label>File (JPG, PNG, PDF)</label>
+                                <input type="file" id="upload-file" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required onchange="validateFile(this)">
+                                <small id="file-name-display" style="display: block; margin-top: 0.5rem; color: var(--primary); font-weight: 500;"></small>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                <i class="fas fa-upload"></i> Upload Now
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meetings Tab -->
+            <div id="meetings" class="tab-pane">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 style="font-size: 1.5rem;">All Meeting Requests</h2>
+                        <button class="btn btn-primary" onclick="openModal('request-modal')">New Request</button>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Mentor</th>
+                                <th>Topic</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Summary / Tasks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="meetings-table-body-full"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Assignments Tab -->
+            <div id="assignments" class="tab-pane">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 style="font-size: 1.5rem;">My Assignments</h2>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Submission Date</th>
+                                <th>Status</th>
+                                <th>File</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignments-table-body-full"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mentors Tab -->
+            <div id="mentors" class="tab-pane">
+                <div class="card">
+                    <h2 style="margin-bottom: 1.5rem;">Verified Institutional Mentors</h2>
+                    <div id="mentors-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                        <!-- Mentor cards will be loaded here -->
+                        <div class="stat-card" style="flex-direction: column; align-items: flex-start;">
+                            <div class="avatar" style="width: 64px; height: 64px; margin-bottom: 1rem;">JM</div>
+                            <h3 style="font-size: 1.125rem;">John Mentor</h3>
+                            <p style="color: var(--text-muted); font-size: 0.875rem;">Senior Faculty, Computer Science</p>
+                            <button class="btn btn-outline" style="margin-top: 1rem; width: 100%;" onclick="openRequestWithMentor(2, 'John Mentor')">Request Guidance</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Request Meeting Modal -->
+    <div id="request-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('request-modal')">&times;</span>
+            <h3 style="margin-bottom: 1.5rem;">Request a Meeting</h3>
+            <form id="request-meeting-form">
+                <div class="form-group">
+                    <label>Select Mentor</label>
+                    <select id="mentor-select" class="form-control" required>
+                        <option value="">Choose a Mentor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Topic</label>
+                    <input type="text" id="meeting-topic" class="form-control" placeholder="What do you want to discuss?" required>
+                </div>
+                <div class="form-group">
+                    <label>Preferred Date & Time</label>
+                    <input type="datetime-local" id="meeting-date" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Send Request</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Modal -->
+    <div id="summary-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('summary-modal')">&times;</span>
+            <h3 style="margin-bottom: 1.5rem;">Add Meeting Summary</h3>
+            <form id="summary-form">
+                <input type="hidden" id="summary-meeting-id">
+                <div class="form-group">
+                    <label>Discussion Summary</label>
+                    <textarea id="summary-text" class="form-control" rows="4" placeholder="What was discussed?" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Tasks Assigned / Action Items</label>
+                    <textarea id="tasks-text" class="form-control" rows="3" placeholder="What are your next steps?"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Save Summary</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || user.role !== 'MENTEE') window.location.href = 'login.html';
+
+        document.getElementById('user-name').innerText = user.name.split(' ')[0];
+        document.getElementById('user-full-name').innerText = user.name;
+        document.getElementById('user-avatar').innerText = user.name.charAt(0);
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(link => link.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            loadData();
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function openRequestWithMentor(id, name) {
+            document.getElementById('mentor-select').value = id;
+            openModal('request-modal');
+        }
+        async function loadData() {
+            try {
+                const meetings = await apiRequest('/meetings/my');
+                const myAssignments = await apiRequest('/assignments/my');
+                const mentors = await apiRequest('/mentors/search');
+
+                // Update Stats
+                document.getElementById('stat-meetings').innerText = meetings.length;
+                document.getElementById('stat-assignments').innerText = myAssignments.length;
+                document.getElementById('stat-verified').innerText = myAssignments.filter(a => a.status === 'VERIFIED').length;
+
+                // Update Overview Table
+                const overviewBody = document.getElementById('meetings-table-body-overview');
+                overviewBody.innerHTML = meetings.slice(0, 5).map(m => `
+                    <tr>
+                        <td>${m.mentor.name}</td>
+                        <td>${m.topic}</td>
+                        <td>${new Date(m.meetingDate).toLocaleString()}</td>
+                        <td><span class="badge badge-${m.status.toLowerCase()}">${m.status}</span></td>
+                    </tr>
+                `).join('') || '<tr><td colspan="4" style="text-align:center;">No meetings found.</td></tr>';
+
+                // Update Full Meetings Table
+                const fullMeetingsBody = document.getElementById('meetings-table-body-full');
+                fullMeetingsBody.innerHTML = meetings.map(m => `
+                    <tr>
+                        <td>${m.mentor.name}</td>
+                        <td>${m.topic}</td>
+                        <td>${new Date(m.meetingDate).toLocaleString()}</td>
+                        <td><span class="badge badge-${m.status.toLowerCase()}">${m.status}</span></td>
+                        <td>
+                            ${m.summary ? `
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">
+                                    <strong>Summary:</strong> ${m.summary}<br>
+                                    <strong>Tasks:</strong> ${m.tasksAssigned}
+                                </div>
+                            ` : (m.status === 'APPROVED' ? `
+                                <button class="btn btn-outline btn-sm" onclick="openSummaryModal(${m.id})">Add Summary</button>
+                            ` : 'No summary yet.')}
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Update Assignments Table
+                const assBody = document.getElementById('assignments-table-body-full');
+                assBody.innerHTML = myAssignments.map(a => {
+                    const fileName = a.filePath ? a.filePath.split(/[/\\]/).pop() : 'No file';
+                    const ext = fileName.split('.').pop().toLowerCase();
+                    const icon = ext === 'pdf' ? 'fa-file-pdf' : (ext === 'jpg' || ext === 'jpeg' || ext === 'png') ? 'fa-file-image' : 'fa-file';
+                    return `
+                    <tr>
+                        <td>${a.title}</td>
+                        <td>${new Date(a.submissionDate).toLocaleString()}</td>
+                        <td><span class="badge badge-${a.status.toLowerCase()}">${a.status}</span></td>
+                        <td><i class="fas ${icon}" style="margin-right: 0.5rem;"></i>${fileName}</td>
+                    </tr>`;
+                }).join('') || '<tr><td colspan="4" style="text-align:center;">No assignments uploaded yet.</td></tr>';
+
+                // Update Mentors List
+                const mentorGrid = document.getElementById('mentors-grid');
+                mentorGrid.innerHTML = mentors.map(m => `
+                    <div class="stat-card" style="flex-direction: column; align-items: flex-start; padding: 2rem;">
+                        <div class="avatar" style="width: 64px; height: 64px; margin-bottom: 1rem; background: linear-gradient(135deg, var(--primary), #8b5cf6); font-size: 1.5rem;">
+                            ${m.name.charAt(0)}
+                        </div>
+                        <h3 style="font-size: 1.125rem; font-weight: 700;">${m.name}</h3>
+                        <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem;">${m.experience || 'Institutional Mentor'}</p>
+                        <p style="color: var(--text-muted); font-size: 0.8125rem; margin-top: 0.5rem; line-height: 1.4;">${m.skills || 'Guidance, Research & Growth'}</p>
+                        <button class="btn btn-outline" style="margin-top: 1.5rem; width: 100%; justify-content: center;" onclick="openRequestWithMentor(${m.userId}, '${m.name}')">
+                            Request Guidance
+                        </button>
+                    </div>
+                `).join('') || '<p>No mentors available at the moment.</p>';
+
+                // Update Request Select
+                const mentorSelect = document.getElementById('mentor-select');
+                const currentVal = mentorSelect.value;
+                mentorSelect.innerHTML = '<option value="">Choose a Mentor</option>' + 
+                    mentors.map(m => `<option value="${m.userId}">${m.name}</option>`).join('');
+                if (currentVal) mentorSelect.value = currentVal;
+
+            } catch (err) {
+                console.error(err);
+                showToast('Failed to load data: ' + err.message, 'error');
+            }
+        }
+
+        document.getElementById('request-meeting-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                mentorId: document.getElementById('mentor-select').value,
+                topic: document.getElementById('meeting-topic').value,
+                date: document.getElementById('meeting-date').value
+            };
+            try {
+                await apiRequest('/meetings/request', 'POST', payload);
+                showToast('Meeting request sent!');
+                closeModal('request-modal');
+                loadData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        function validateFile(input) {
+            const file = input.files[0];
+            const display = document.getElementById('file-name-display');
+            if (file) {
+                const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+                if (!validTypes.includes(file.type)) {
+                    showToast('Only JPG, PNG, PDF allowed', 'error');
+                    input.value = '';
+                    display.innerText = '';
+                    return;
+                }
+                display.innerText = 'Selected file: ' + file.name;
+            } else {
+                display.innerText = '';
+            }
+        }
+
+        document.getElementById('quick-upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn.innerHTML;
+            
+            const fileInput = document.getElementById('upload-file');
+            if (!fileInput.files[0]) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+            const formData = new FormData();
+            formData.append('title', document.getElementById('upload-title').value);
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                await apiRequest('/assignments/upload', 'POST', formData);
+                showToast('Upload successful!');
+                document.getElementById('quick-upload-form').reset();
+                document.getElementById('file-name-display').innerText = '';
+                loadData();
+            } catch (err) {
+                showToast('Upload failed: ' + err.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+            }
+        });
+
+        function openSummaryModal(id) {
+            document.getElementById('summary-meeting-id').value = id;
+            openModal('summary-modal');
+        }
+
+        document.getElementById('summary-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('summary-meeting-id').value;
+            const payload = {
+                summary: document.getElementById('summary-text').value,
+                tasks: document.getElementById('tasks-text').value
+            };
+            try {
+                await apiRequest(`/meetings/${id}/summary`, 'PUT', payload);
+                showToast('Summary saved successfully!');
+                closeModal('summary-modal');
+                loadData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            icon.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+        if (document.getElementById('theme-icon')) {
+            document.getElementById('theme-icon').className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

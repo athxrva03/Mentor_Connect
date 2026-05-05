@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Mentors | Mentor Connect</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">
+            <i class="fas fa-graduation-cap"></i> MentorConnect
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="mentee-dashboard.html">Dashboard</a>
+            <a href="#" onclick="logout()" class="btn btn-outline">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header style="margin-bottom: 3rem; text-align: center;">
+            <h1>Find Your Perfect Mentor</h1>
+            <p>Search by name or skills (e.g. Java, Python, UI/UX)</p>
+            <div style="max-width: 600px; margin: 2rem auto; display: flex; gap: 1rem;">
+                <input type="text" id="search-input" class="form-control" placeholder="Search skills or names...">
+                <button onclick="searchMentors()" class="btn btn-primary">Search</button>
+            </div>
+        </header>
+
+        <div class="mentor-grid" id="mentor-results">
+            <!-- Mentor cards will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Connection Request Modal -->
+    <div id="request-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 500px; width: 90%;">
+            <h3>Send Connection Request</h3>
+            <p style="margin-bottom: 1.5rem;">Tell <span id="modal-mentor-name"></span> why you'd like to connect.</p>
+            <textarea id="request-message" class="form-control" rows="4" placeholder="Hi, I'm looking for guidance on..."></textarea>
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end;">
+                <button onclick="closeModal()" class="btn btn-outline">Cancel</button>
+                <button id="send-btn" class="btn btn-primary">Send Request</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        let selectedMentorId = null;
+
+        async function searchMentors() {
+            const query = document.getElementById('search-input').value;
+            try {
+                const mentors = await apiRequest(`/mentors/search?query=${query}`);
+                const results = document.getElementById('mentor-results');
+                results.innerHTML = mentors.length ? mentors.map(m => `
+                    <div class="card mentor-card">
+                        <img src="${m.profilePicture || 'https://via.placeholder.com/100'}" class="mentor-img">
+                        <h3>${m.name}</h3>
+                        <p style="color: var(--primary); font-weight: 600;">${m.experience || 'Experience not set'}</p>
+                        <div class="skills-tags">
+                            ${(m.skills || '').split(',').map(s => `<span class="tag">${s.trim()}</span>`).join('')}
+                        </div>
+                        <p style="color: var(--gray-600); margin-bottom: 1.5rem;">${m.bio || 'No bio available.'}</p>
+                        <button onclick="openModal(${m.userId}, '${m.name}')" class="btn btn-primary" style="width: 100%;">Connect</button>
+                    </div>
+                `).join('') : '<p style="grid-column: 1/-1; text-align: center; padding: 3rem;">No mentors found matching your search.</p>';
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function openModal(id, name) {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (user.role === 'MENTOR') {
+                showToast('Mentors cannot send connection requests.', 'error');
+                return;
+            }
+            selectedMentorId = id;
+            document.getElementById('modal-mentor-name').innerText = name;
+            document.getElementById('request-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('request-modal').style.display = 'none';
+        }
+
+        document.getElementById('send-btn').addEventListener('click', async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const message = document.getElementById('request-message').value;
+
+            try {
+                await apiRequest('/requests/send', 'POST', {
+                    mentorId: selectedMentorId,
+                    menteeId: user.id,
+                    message: message
+                });
+                showToast('Request sent successfully!');
+                closeModal();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        }
+
+        searchMentors();
+    </script>
+</body>
+</html>

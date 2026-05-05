@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | Mentor Connect</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body data-theme="dark">
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo-container">
+                <i class="fas fa-graduation-cap"></i> <span>MentorConnect</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" id="back-link" class="nav-item"><i class="fas fa-arrow-left"></i> <span>Dashboard</span></a>
+                <a href="profile.html" class="nav-item active"><i class="fas fa-user-circle"></i> <span>Profile</span></a>
+            </nav>
+        </aside>
+
+        <main class="content">
+            <header class="header-top">
+                <h1>Edit Profile</h1>
+                <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></button>
+            </header>
+
+            <div class="auth-card" style="max-width: 800px; margin: 0 auto;">
+                <form id="profile-form">
+                    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="name" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="email" class="form-control" readonly>
+                        </div>
+                    </div>
+
+                    <!-- Mentor Specific -->
+                    <div id="mentor-fields" style="display: none;">
+                        <div class="form-group">
+                            <label>Skills (Comma separated)</label>
+                            <input type="text" id="skills" class="form-control" placeholder="Java, Spring, SQL">
+                        </div>
+                        <div class="form-group">
+                            <label>Experience</label>
+                            <input type="text" id="experience" class="form-control" placeholder="5 years in Software Dev">
+                        </div>
+                        <div class="form-group">
+                            <label>Bio</label>
+                            <textarea id="bio" class="form-control" rows="4"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Mentee Specific -->
+                    <div id="mentee-fields" style="display: none;">
+                        <div class="form-group">
+                            <label>Interests</label>
+                            <input type="text" id="interests" class="form-control" placeholder="Web Dev, AI, Data Science">
+                        </div>
+                        <div class="form-group">
+                            <label>Goals</label>
+                            <textarea id="goals" class="form-control" rows="3" placeholder="I want to learn Spring Boot..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Education</label>
+                            <input type="text" id="education" class="form-control" placeholder="B.Tech Computer Science">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem;">Save Profile Changes</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) window.location.href = 'login.html';
+
+        document.getElementById('back-link').href = user.role === 'MENTOR' ? 'mentor-dashboard.html' : 'mentee-dashboard.html';
+        document.getElementById('name').value = user.name;
+        document.getElementById('email').value = user.email;
+
+        if (user.role === 'MENTOR') {
+            document.getElementById('mentor-fields').style.display = 'block';
+            loadMentorProfile();
+        } else {
+            document.getElementById('mentee-fields').style.display = 'block';
+            loadMenteeProfile();
+        }
+
+        async function loadMentorProfile() {
+            try {
+                const data = await apiRequest(`/mentors/profile/${user.id}`);
+                document.getElementById('skills').value = data.skills || '';
+                document.getElementById('experience').value = data.experience || '';
+                document.getElementById('bio').value = data.bio || '';
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function loadMenteeProfile() {
+            try {
+                const data = await apiRequest(`/mentees/profile/${user.id}`);
+                document.getElementById('interests').value = data.interests || '';
+                document.getElementById('goals').value = data.goals || '';
+                document.getElementById('education').value = data.education || '';
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = user.role === 'MENTOR' ? `/mentors/profile/${user.id}` : `/mentees/profile/${user.id}`;
+            const body = user.role === 'MENTOR' ? {
+                skills: document.getElementById('skills').value,
+                experience: document.getElementById('experience').value,
+                bio: document.getElementById('bio').value
+            } : {
+                interests: document.getElementById('interests').value,
+                goals: document.getElementById('goals').value,
+                education: document.getElementById('education').value
+            };
+
+            try {
+                await apiRequest(url, 'PUT', body);
+                showToast('Profile updated successfully!');
+            } catch (err) { showToast(err.message, 'error'); }
+        });
+
+        function toggleTheme() {
+            const body = document.body;
+            const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+        
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+    </script>
+</body>
+</html>

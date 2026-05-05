@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentorBridge | Professional Institutional Portal</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body data-theme="dark">
+    <nav style="padding: 1.5rem 5%; display: flex; justify-content: space-between; align-items: center; background: transparent; position: absolute; width: 100%;">
+        <div class="logo-container" style="margin-bottom: 0;">
+            <i class="fas fa-graduation-cap"></i> <span>MentorBridge</span>
+        </div>
+        <div style="display: flex; gap: 1.5rem; align-items: center;">
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <div id="auth-links">
+                <a href="login.html" class="btn btn-outline">Login</a>
+                <a href="signup.html" class="btn btn-primary">Join Portal</a>
+            </div>
+            <div id="user-links" style="display: none;">
+                <a href="#" id="dashboard-link" class="btn btn-primary">My Dashboard</a>
+                <button onclick="logout()" class="btn btn-outline">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="content" style="margin-left: 0; padding-top: 100px;">
+        <header class="hero-minimal">
+            <h1>Institutional Guidance <br> Without Boundaries</h1>
+            <p>A centralized platform for structured mentorship, assignment tracking, and verified growth within your institution.</p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <a href="signup.html" class="btn btn-primary btn-lg">Get Started</a>
+                <a href="login.html" class="btn btn-outline btn-lg">Admin Login</a>
+            </div>
+        </header>
+
+        <section class="container" style="max-width: 1100px; margin: 4rem auto;">
+            <div class="grid">
+                <div class="premium-card">
+                    <div>
+                        <span class="card-label">Verification</span>
+                        <h3 style="margin-top: 1rem; font-size: 1.5rem;">Track. Verify. Improve.</h3>
+                        <p style="margin-top: 1rem; opacity: 0.8;">Every assignment and meeting log is verified by mentors to ensure real progress.</p>
+                    </div>
+                    <i class="fas fa-check-double fa-2x" style="align-self: flex-end;"></i>
+                </div>
+                <div class="premium-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);">
+                    <div>
+                        <span class="card-label">Identity</span>
+                        <h3 style="margin-top: 1rem; font-size: 1.5rem;">College ID Restricted</h3>
+                        <p style="margin-top: 1rem; opacity: 0.8;">Secure institutional access ensuring only verified students and faculty interact.</p>
+                    </div>
+                    <i class="fas fa-id-card fa-2x" style="align-self: flex-end;"></i>
+                </div>
+                <div class="premium-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <div>
+                        <span class="card-label">Governance</span>
+                        <h3 style="margin-top: 1rem; font-size: 1.5rem;">Admin Oversight</h3>
+                        <p style="margin-top: 1rem; opacity: 0.8;">Centralized management of mentor-mentee mappings and institutional analytics.</p>
+                    </div>
+                    <i class="fas fa-shield-alt fa-2x" style="align-self: flex-end;"></i>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            icon.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+        document.getElementById('theme-icon').className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user) {
+            document.getElementById('auth-links').style.display = 'none';
+            document.getElementById('user-links').style.display = 'flex';
+            
+            let dashboardUrl = 'mentee-dashboard.html';
+            if (user.role === 'ADMIN') dashboardUrl = 'admin-dashboard.html';
+            else if (user.role === 'MENTOR') dashboardUrl = 'mentor-dashboard.html';
+            
+            document.getElementById('dashboard-link').href = dashboardUrl;
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

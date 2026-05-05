@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | MentorBridge</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-theme="dark">
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo-container">
+                <i class="fas fa-shield-alt"></i> <span>Admin Portal</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" onclick="switchTab('users')"><i class="fas fa-users"></i> <span>Manage Users</span></a>
+                <a href="#" class="nav-item" onclick="switchTab('mappings')"><i class="fas fa-link"></i> <span>Mentor Mappings</span></a>
+                <a href="#" class="nav-item" onclick="switchTab('analytics')"><i class="fas fa-chart-pie"></i> <span>Analytics</span></a>
+            </nav>
+            <div style="margin-top: auto; padding-top: 2rem;">
+                <button onclick="logout()" class="nav-item" style="width: 100%; border: none; background: transparent; cursor: pointer;">
+                    <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="content">
+            <header class="header-top">
+                <div>
+                    <h1 style="font-size: 2rem; font-weight: 800;">System Control</h1>
+                    <p style="color: var(--text-muted);">Institutional Oversight Dashboard</p>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></button>
+            </header>
+
+            <div id="tab-users" class="tab-content">
+                <div class="auth-card" style="max-width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h2>User Directory</h2>
+                        <button class="btn btn-outline btn-sm" onclick="loadUsers()"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+                    <div id="users-loading" class="loading-spinner" style="display: none; text-align: center; padding: 2rem;">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p>Loading users...</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+                                <th style="padding: 1rem;">Name</th>
+                                <th style="padding: 1rem;">College ID</th>
+                                <th style="padding: 1rem;">Role</th>
+                                <th style="padding: 1rem;">Email</th>
+                                <th style="padding: 1rem;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-mappings" class="tab-content" style="display: none;">
+                <div class="grid">
+                    <div class="auth-card" style="max-width: 100%;">
+                        <h2 style="margin-bottom: 1.5rem;">Create Mapping</h2>
+                        <form id="mapping-form">
+                            <div class="form-group">
+                                <label>Mentor</label>
+                                <select id="mentor-select" class="form-control" required>
+                                    <option value="">Select Mentor</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Mentee</label>
+                                <select id="mentee-select" class="form-control" required>
+                                    <option value="">Select Mentee</option>
+                                </select>
+                            </div>
+                            <button type="submit" id="mapping-submit" class="btn btn-primary" style="width: 100%;">Assign Mentor</button>
+                        </form>
+                    </div>
+                    <div class="auth-card" style="max-width: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2>Existing Mappings</h2>
+                            <button class="btn btn-outline btn-sm" onclick="loadMappings()"><i class="fas fa-sync"></i></button>
+                        </div>
+                        <div id="mappings-loading" style="display: none; text-align: center; padding: 1rem;">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                        </div>
+                        <div id="mapping-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-analytics" class="tab-content" style="display: none;">
+                <div class="grid">
+                    <div class="premium-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); min-height: 150px;">
+                        <h3>Total Active Users</h3>
+                        <p id="total-users" style="font-size: 3rem; font-weight: 800;">0</p>
+                    </div>
+                    <div class="premium-card" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); min-height: 150px;">
+                        <h3>Mapped Mentorships</h3>
+                        <p id="total-mappings" style="font-size: 3rem; font-weight: 800;">0</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || user.role !== 'ADMIN') {
+            showToast('Access Denied. Admin only.', 'error');
+            window.location.href = 'login.html';
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.getElementById(`tab-${tab}`).style.display = 'block';
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            if (tab === 'users') loadUsers();
+            if (tab === 'mappings') loadMappings();
+            if (tab === 'analytics') loadAnalytics();
+        }
+
+        async function loadUsers() {
+            const loader = document.getElementById('users-loading');
+            const list = document.getElementById('user-list');
+            loader.style.display = 'block';
+            list.innerHTML = '';
+            
+            try {
+                const users = await apiRequest('/admin/users');
+                loader.style.display = 'none';
+                list.innerHTML = users.map(u => `
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 1rem;">${u.name}</td>
+                        <td style="padding: 1rem;">${u.collegeId}</td>
+                        <td style="padding: 1rem;"><span class="badge badge-${u.role.toLowerCase()}">${u.role}</span></td>
+                        <td style="padding: 1rem;">${u.email}</td>
+                        <td style="padding: 1rem;">
+                            ${u.role !== 'ADMIN' ? `
+                                <button onclick="deleteUser(${u.id})" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: #ef4444;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : '-'}
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Populate selects for mapping
+                const mentors = users.filter(u => u.role === 'MENTOR');
+                const mentees = users.filter(u => u.role === 'MENTEE');
+                
+                const mentorSelect = document.getElementById('mentor-select');
+                const menteeSelect = document.getElementById('mentee-select');
+                
+                mentorSelect.innerHTML = '<option value="">Select Mentor</option>' + 
+                    mentors.map(m => `<option value="${m.id}">${m.name} (${m.collegeId})</option>`).join('');
+                menteeSelect.innerHTML = '<option value="">Select Mentee</option>' + 
+                    mentees.map(m => `<option value="${m.id}">${m.name} (${m.collegeId})</option>`).join('');
+            } catch (err) {
+                loader.style.display = 'none';
+                showToast('Failed to load users: ' + err.message, 'error');
+            }
+        }
+
+        async function loadMappings() {
+            const loader = document.getElementById('mappings-loading');
+            const list = document.getElementById('mapping-list');
+            loader.style.display = 'block';
+            list.innerHTML = '';
+            
+            try {
+                const mappings = await apiRequest('/admin/mappings');
+                loader.style.display = 'none';
+                list.innerHTML = mappings.map(m => `
+                    <div style="padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-weight: 600;">${m.mentee.name}</span>
+                            <i class="fas fa-long-arrow-alt-right" style="margin: 0 0.75rem; color: var(--primary);"></i>
+                            <span style="font-weight: 600;">${m.mentor.name}</span>
+                        </div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(m.assignedAt).toLocaleDateString()}</span>
+                    </div>
+                `).join('') || '<p style="text-align: center; padding: 2rem; color: var(--text-muted);">No mappings found.</p>';
+            } catch (err) {
+                loader.style.display = 'none';
+                showToast('Failed to load mappings: ' + err.message, 'error');
+            }
+        }
+
+        async function loadAnalytics() {
+            try {
+                const users = await apiRequest('/admin/users');
+                const mappings = await apiRequest('/admin/mappings');
+                document.getElementById('total-users').innerText = users.length;
+                document.getElementById('total-mappings').innerText = mappings.length;
+            } catch (err) {
+                showToast('Failed to load analytics', 'error');
+            }
+        }
+
+        document.getElementById('mapping-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('mapping-submit');
+            const mentorId = document.getElementById('mentor-select').value;
+            const menteeId = document.getElementById('mentee-select').value;
+            
+            if (!mentorId || !menteeId) {
+                showToast('Please select both mentor and mentee', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Assigning...';
+
+            try {
+                await apiRequest(`/admin/assign?mentorId=${mentorId}&menteeId=${menteeId}`, 'POST');
+                showToast('Mentor assigned successfully!');
+                loadMappings();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Assign Mentor';
+            }
+        });
+
+        async function deleteUser(id) {
+            if (!confirm('Are you sure you want to permanently delete this user? This action cannot be undone.')) return;
+            try {
+                await apiRequest(`/admin/users/${id}`, 'DELETE');
+                showToast('User deleted successfully');
+                loadUsers();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            icon.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+        document.getElementById('theme-icon').className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
+        }
+        
+        loadUsers();
+    </script>
+</body>
+</html>

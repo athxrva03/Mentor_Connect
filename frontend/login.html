@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | MentorBridge</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body data-theme="dark" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; position: relative;">
+    <button class="theme-toggle" onclick="toggleTheme()" style="position: absolute; top: 2rem; right: 2rem;"><i class="fas fa-moon" id="theme-icon"></i></button>
+    <div class="auth-card">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+            <div class="logo-container" style="justify-content: center; margin-bottom: 1rem;">
+                <i class="fas fa-graduation-cap"></i> <span>MentorBridge</span>
+            </div>
+            <h1 style="font-size: 1.75rem; font-weight: 700;">Institutional Access</h1>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Secure login for Mentors, Mentees & Admin</p>
+        </div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="name@college.edu" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                <i class="fas fa-sign-in-alt"></i> Authenticate
+            </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 2rem; color: var(--text-muted);">
+            New to the portal? <a href="signup.html" style="color: var(--primary); font-weight: 600;">Register here</a>
+        </p>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+        document.getElementById('theme-icon').className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            icon.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const data = await apiRequest('/login', 'POST', { email, password });
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data));
+                
+                showToast('Success! Redirecting...');
+                setTimeout(() => {
+                    if (data.role === 'ADMIN') window.location.href = 'admin-dashboard.html';
+                    else window.location.href = data.role === 'MENTOR' ? 'mentor-dashboard.html' : 'mentee-dashboard.html';
+                }, 1000);
+            } catch (error) {
+                showToast(error.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Authenticate';
+            }
+        });
+    </script>
+</body>
+</html>
