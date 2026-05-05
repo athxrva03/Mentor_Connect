@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 async function apiRequest(endpoint, method = 'GET', body = null) {
     const token = localStorage.getItem('token');
@@ -23,7 +23,7 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 
     try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-        
+
         if (response.status === 401) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
@@ -38,7 +38,7 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
                 const errorJson = JSON.parse(errorText);
                 if (errorJson.error) errorMessage = errorJson.error;
                 if (errorJson.message) errorMessage = errorJson.message;
-            } catch (e) {}
+            } catch (e) { }
             throw new Error(errorMessage);
         }
 
@@ -58,7 +58,7 @@ function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerText = message;
-    
+
     Object.assign(toast.style, {
         position: 'fixed',
         bottom: '20px',
@@ -73,7 +73,7 @@ function showToast(message, type = 'success') {
     });
 
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 300);
