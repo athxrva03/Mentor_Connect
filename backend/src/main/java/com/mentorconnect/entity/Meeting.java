@@ -32,6 +32,7 @@ public class Meeting {
     private LocalDateTime meetingDate;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private MeetingStatus status = MeetingStatus.PENDING;
 
     @Column(columnDefinition = "TEXT")

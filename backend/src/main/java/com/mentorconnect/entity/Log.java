@@ -30,6 +30,7 @@ public class Log {
     @Column(nullable = false)
     private LocalDate date;
 
+    @Builder.Default
     private boolean verified = false;
 
     private LocalDateTime createdAt;

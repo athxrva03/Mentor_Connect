@@ -29,6 +29,7 @@ public class Request {
     private User mentee;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private RequestStatus status = RequestStatus.PENDING;
 
     @Column(columnDefinition = "TEXT")
